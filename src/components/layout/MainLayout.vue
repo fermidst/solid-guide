@@ -10,6 +10,7 @@
       <v-tabs>
         <v-tab to="/">Главная</v-tab>
         <v-tab to="/employees">Сотрудники</v-tab>
+        <v-tab to="/positions">Должности</v-tab>
       </v-tabs>
       <slot name="title">Система управления персоналом</slot>
     </v-app-bar>

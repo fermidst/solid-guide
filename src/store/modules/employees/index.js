@@ -7,8 +7,10 @@ const state = {
   },
   createDialog: false,
   deleteDialog: false,
-  editedItem: { id: 0, fullName: "", department: "", position: "" },
-  defaultItem: { id: 0, fullName: "", department: "", position: "" }
+  editedItem: { id: 0, fullName: "", department: "", positionId: 0 },
+  defaultItem: { id: 0, fullName: "", department: "", positionId: 0 },
+  selectedPosition: { id: 0, name: "", salary: 0, workingHoursPerWeek: 0 },
+  defaultPosition: { id: 0, name: "", salary: 0, workingHoursPerWeek: 0 }
 };
 
 const getters = {};
@@ -29,6 +31,18 @@ const mutations = {
   },
   setEditedItem(state, editedItem) {
     state.editedItem = Object.assign({}, editedItem);
+  },
+  setSelectedPosition(state, value) {
+    state.selectedPosition = value;
+  },
+  setEditedPositionItemField(state, { fieldName, value }) {
+    state.editedItem[fieldName] = value;
+  },
+  setDefaultSelectedPosition(state) {
+    state.selectedPosition = state.defaultPosition;
+  },
+  setDefaultEditedItem(state) {
+    state.editedItem = state.defaultItem;
   }
 };
 
@@ -93,6 +107,21 @@ const actions = {
   },
   async setEditedItem(context, { item }) {
     context.commit("setEditedItem", item);
+  },
+  async setSelectedPosition(context, { value }) {
+    context.commit("setSelectedPosition", value);
+  },
+  async setEditedPositionItemField(context, { fieldName, value }) {
+    context.commit("setEditedPositionItemField", {
+      fieldName: fieldName,
+      value: value
+    });
+  },
+  async setDefaultSelectedPosition(context) {
+    context.commit("setDefaultSelectedPosition");
+  },
+  async setDefaultEditedItem(context) {
+    context.commit("setDefaultEditedItem");
   }
 };
 

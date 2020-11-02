@@ -2,8 +2,7 @@
   <MainLayout>
     <v-data-table
       :headers="headers"
-      :items="employeesList.value"
-      :search="search"
+      :items="positionsList.value"
       sort-by="id"
       class="elevation-4 ma-4 pa-4"
       disable-pagination
@@ -12,15 +11,8 @@
     >
       <template #top>
         <v-toolbar flat>
-          <v-toolbar-title>Сотрудники</v-toolbar-title>
+          <v-toolbar-title>Должности</v-toolbar-title>
           <v-divider class="mx-4" inset vertical />
-          <v-text-field
-            v-model="search"
-            append-icon="mdi-magnify"
-            label="Поиск"
-            single-line
-            hide-details
-          ></v-text-field>
           <v-spacer />
           <v-dialog
             v-model="createDialog"
@@ -30,37 +22,33 @@
           >
             <template #activator="{on, attrs}">
               <v-btn color="primary" dark v-bind="attrs" v-on="on"
-                >Новый сотрудник</v-btn
+                >Новая должность</v-btn
               >
             </template>
             <v-card>
               <v-card-title>
-                <span class="headline">Информация о сотруднике</span>
+                <span class="headline">Информация о должности</span>
               </v-card-title>
               <v-card-text>
                 <v-container>
                   <v-row justify="space-around">
                     <v-col>
                       <v-text-field
-                        v-model="editedItem.fullName"
-                        label="ФИО сотрудника"
+                        v-model="editedItem.name"
+                        label="Наименование должности"
                       ></v-text-field>
                     </v-col>
                     <v-col>
-                      <v-select
-                        :items="departments"
-                        v-model="editedItem.department"
-                        label="Отдел"
-                      />
+                      <v-text-field
+                        v-model="editedItem.salary"
+                        label="Заработная плата на должности"
+                      ></v-text-field>
                     </v-col>
                     <v-col>
-                      <v-select
-                        :items="positions"
-                        v-model="selectedPosition"
-                        item-text="name"
-                        return-object
-                        label="Должность"
-                      />
+                      <v-text-field
+                        v-model="editedItem.workingHoursPerWeek"
+                        label="Количество рабочих часов в неделю"
+                      ></v-text-field>
                     </v-col>
                   </v-row>
                 </v-container>
@@ -86,14 +74,11 @@
           mdi-account-remove
         </v-icon>
       </template>
-      <template #item.position="{item}">
-        {{ positions.find(p => p.id === item.positionId).name }}
-      </template>
     </v-data-table>
     <v-dialog v-model="deleteDialog" max-width="700px">
       <v-card>
         <v-card-title class="headline justify-center"
-          >Вы уверены, что хотите уволить этого сотрудника?</v-card-title
+          >Вы уверены, что хотите удалить эту должность?</v-card-title
         >
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -115,83 +100,51 @@
 import MainLayout from "@/components/layout/MainLayout";
 import PasswordDialog from "@/components/PasswordDialog";
 export default {
-  name: "Employees",
-  components: { MainLayout, PasswordDialog },
+  name: "Positions",
+  components: { PasswordDialog, MainLayout },
   data: () => ({
-    search: "",
     headers: [
       { text: "Id", align: "start", value: "id" },
-      { text: "ФИО", value: "fullName" },
-      { text: "Отдел", value: "department" },
-      { text: "Должность", value: "position", sortable: false },
+      { text: "Наименование должности", value: "name" },
+      { text: "Зарплата", value: "salary" },
+      {
+        text: "Количество рабочих часов в неделю",
+        value: "workingHoursPerWeek"
+      },
       { text: "Действия", value: "actions", sortable: false, width: "200px" }
     ]
   }),
   created() {
-    this.$store.dispatch("fetchEmployeesList");
     this.$store.dispatch("fetchPositionsList");
   },
   computed: {
-    departments: {
+    positionsList: {
       get() {
-        return [
-          "Отдел разработки и внедрения ПО",
-          "Отдел тестирования",
-          "Отдел аналитики"
-        ];
-      }
-    },
-    positions: {
-      get() {
-        return this.$store.state.positions.positionsList.value;
-      }
-    },
-    employeesList: {
-      get() {
-        return this.$store.state.employees.employeesList;
+        return this.$store.state.positions.positionsList;
       }
     },
     createDialog: {
       get() {
-        return this.$store.state.employees.createDialog;
+        return this.$store.state.positions.createDialog;
       },
       set(value) {
-        this.$store.dispatch("setCreateDialog", { value: value });
+        this.$store.dispatch("setCreatePositionDialog", { value: value });
       }
     },
     deleteDialog: {
       get() {
-        return this.$store.state.employees.deleteDialog;
+        return this.$store.state.positions.deleteDialog;
       },
       set(value) {
-        this.$store.dispatch("setDeleteDialog", { value: value });
+        this.$store.dispatch("setDeletePositionDialog", { value: value });
       }
     },
     editedItem: {
       get() {
-        return this.$store.state.employees.editedItem;
+        return this.$store.state.positions.editedItem;
       },
       set(value) {
-        this.$store.dispatch("setEditedItem", { item: value });
-      }
-    },
-    editedItemPositionId: {
-      get() {
-        return this.$store.state.positions.editedItem.positionId;
-      },
-      set(value) {
-        this.$store.dispatch("setEditedPositionItemField", {
-          fieldName: "positionId",
-          value: value
-        });
-      }
-    },
-    selectedPosition: {
-      get() {
-        return this.$store.state.employees.selectedPosition;
-      },
-      set(value) {
-        this.$store.dispatch("setSelectedPosition", { value: value });
+        this.$store.dispatch("setEditedPositionItem", { item: value });
       }
     }
   },
@@ -201,14 +154,13 @@ export default {
       this.createDialog = true;
     },
     saveItem() {
-      this.editedItemPositionId = this.selectedPosition.id;
       if (this.editedItem.id > 0) {
-        this.$store.dispatch("putEmployee", {
+        this.$store.dispatch("putPosition", {
           id: this.editedItem.id,
           data: this.editedItem
         });
       } else {
-        this.$store.dispatch("postEmployee", { data: this.editedItem });
+        this.$store.dispatch("postPosition", { data: this.editedItem });
       }
       this.createDialog = false;
       this.clearFields();
@@ -222,15 +174,17 @@ export default {
       this.deleteDialog = true;
     },
     deleteItemConfirm() {
-      this.$store.dispatch("deleteEmployee", {
-        id: this.$store.state.employees.editedItem.id
+      this.$store.dispatch("deletePosition", {
+        id: this.$store.state.positions.editedItem.id
       });
       this.deleteDialog = false;
       this.clearFields();
     },
     clearFields() {
-      this.$store.dispatch("setDefaultEditedItem");
-      this.$store.dispatch("setDefaultSelectedPosition");
+      this.editedItem = Object.assign(
+        {},
+        this.$store.state.positions.defaultItem
+      );
     }
   }
 };
