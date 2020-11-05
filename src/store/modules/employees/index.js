@@ -7,10 +7,33 @@ const state = {
   },
   createDialog: false,
   deleteDialog: false,
-  editedItem: { id: 0, fullName: "", department: "", positionId: 0 },
-  defaultItem: { id: 0, fullName: "", department: "", positionId: 0 },
+  editedItem: {
+    id: 0,
+    fullName: "",
+    passportSeries: 0,
+    passportNumber: 0,
+    otherInfo: "",
+    lengthOfWork: 0.0,
+    previousWorkPlace: "",
+    departmentId: 0,
+    positionId: 0
+  },
+  defaultItem: {
+    id: 0,
+    fullName: "",
+    passportSeries: 0,
+    passportNumber: 0,
+    otherInfo: "",
+    lengthOfWork: 0.0,
+    previousWorkPlace: "",
+    departmentId: 0,
+    positionId: 0
+  },
   selectedPosition: { id: 0, name: "", salary: 0, workingHoursPerWeek: 0 },
-  defaultPosition: { id: 0, name: "", salary: 0, workingHoursPerWeek: 0 }
+  defaultPosition: { id: 0, name: "", salary: 0, workingHoursPerWeek: 0 },
+  selectedDepart: { id: 0, name: "" },
+  defaultDepart: { id: 0, name: "" },
+  errorSnackbar: false
 };
 
 const getters = {};
@@ -35,14 +58,23 @@ const mutations = {
   setSelectedPosition(state, value) {
     state.selectedPosition = value;
   },
+  setSelectedDepart(state, value) {
+    state.selectedDepart = value;
+  },
   setEditedPositionItemField(state, { fieldName, value }) {
     state.editedItem[fieldName] = value;
   },
   setDefaultSelectedPosition(state) {
     state.selectedPosition = state.defaultPosition;
   },
+  setDefaultSelectedDepart(state) {
+    state.selectedDepart = state.defaultDepart;
+  },
   setDefaultEditedItem(state) {
     state.editedItem = state.defaultItem;
+  },
+  setErrorSnackbar(state, value) {
+    state.errorSnackbar = value;
   }
 };
 
@@ -60,6 +92,7 @@ const actions = {
         })
         .catch(e => {
           reject(e);
+          context.commit("setErrorSnackbar", true);
         });
     });
   },
@@ -72,6 +105,7 @@ const actions = {
         })
         .catch(e => {
           reject(e);
+          context.commit("setErrorSnackbar", true);
         });
     });
   },
@@ -84,6 +118,7 @@ const actions = {
         })
         .catch(e => {
           reject(e);
+          context.commit("setErrorSnackbar", true);
         });
     });
   },
@@ -96,6 +131,7 @@ const actions = {
         })
         .catch(e => {
           reject(e);
+          context.commit("setErrorSnackbar", true);
         });
     });
   },
@@ -111,6 +147,9 @@ const actions = {
   async setSelectedPosition(context, { value }) {
     context.commit("setSelectedPosition", value);
   },
+  async setSelectedDepart(context, { value }) {
+    context.commit("setSelectedDepart", value);
+  },
   async setEditedPositionItemField(context, { fieldName, value }) {
     context.commit("setEditedPositionItemField", {
       fieldName: fieldName,
@@ -120,8 +159,14 @@ const actions = {
   async setDefaultSelectedPosition(context) {
     context.commit("setDefaultSelectedPosition");
   },
+  async setDefaultSelectedDepart(context) {
+    context.commit("setDefaultSelectedDepart");
+  },
   async setDefaultEditedItem(context) {
     context.commit("setDefaultEditedItem");
+  },
+  async setErrorSnackbar(context, { value }) {
+    context.commit("setErrorSnackbar", value);
   }
 };
 

@@ -49,7 +49,9 @@
                     <v-col>
                       <v-select
                         :items="departments"
-                        v-model="editedItem.department"
+                        v-model="selectedDepart"
+                        item-text="name"
+                        return-object
                         label="Отдел"
                       />
                     </v-col>
@@ -61,6 +63,66 @@
                         return-object
                         label="Должность"
                       />
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col>
+                      <v-text-field
+                        v-model.number="editedItem.passportSeries"
+                        label="Серия паспорта"
+                        :rules="[
+                          v =>
+                            v.length === 4 ||
+                            'Серия паспорта состоит из четырех цифр'
+                        ]"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col
+                      ><v-text-field
+                        v-model.number="editedItem.passportNumber"
+                        label="Номер паспорта"
+                        :rules="[
+                          v =>
+                            v.length === 6 ||
+                            'Номер паспорта состоит из шести цифр'
+                        ]"
+                      ></v-text-field
+                    ></v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col>
+                      <v-text-field
+                        v-model.number="editedItem.lengthOfWork"
+                        label="Стаж работы в годах"
+                      ></v-text-field>
+                    </v-col>
+                    <v-col>
+                      <v-text-field
+                        v-model="editedItem.previousWorkPlace"
+                        label="Предыдущее место работы"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col>
+                      <v-col
+                        ><v-textarea
+                          v-model="editedItem.otherInfo"
+                          label="Прочая информация"
+                        ></v-textarea
+                      ></v-col>
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col>
+                      <v-card>
+                        <v-card-text>
+                          <h3 class="text-center red--text">
+                            Перед сохранением, подтвердите текущий отдел и
+                            должность сотрудника
+                          </h3>
+                        </v-card-text>
+                      </v-card>
                     </v-col>
                   </v-row>
                 </v-container>
@@ -78,6 +140,47 @@
           </v-dialog>
         </v-toolbar>
       </template>
+      <template #item.id="{item}">
+        {{ employeesList.value.indexOf(item) + 1 }}
+      </template>
+      <template #item.position="{item}">
+        {{ positions.find(p => p.id === item.positionId).name }}
+      </template>
+      <template #item.department="{item}">
+        {{ departments.find(d => d.id === item.departmentId).name }}
+      </template>
+      <template #item.info="{item}">
+        <v-expansion-panels accordion>
+          <v-expansion-panel>
+            <v-expansion-panel-header>
+              <p class="text-center">Показать детальную информацию</p>
+            </v-expansion-panel-header>
+            <v-expansion-panel-content>
+              <v-container>
+                <v-row>
+                  <v-col> Серия паспорта: {{ item.passportSeries }} </v-col>
+                </v-row>
+                <v-row>
+                  <v-col> Номер паспорта: {{ item.passportNumber }} </v-col>
+                </v-row>
+                <v-row>
+                  <v-col> Прочая информация: {{ item.otherInfo }} </v-col>
+                </v-row>
+                <v-row>
+                  <v-col>
+                    Стаж работы в годах: {{ item.lengthOfWork }} г.
+                  </v-col>
+                </v-row>
+                <v-row>
+                  <v-col>
+                    Предыдущее место работы: {{ item.previousWorkPlace }}
+                  </v-col>
+                </v-row>
+              </v-container>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+        </v-expansion-panels>
+      </template>
       <template #item.actions="{item}">
         <v-icon class="mx-2" @click="editItem(item)">
           mdi-account-edit
@@ -85,9 +188,6 @@
         <v-icon class="mx-2" @click="deleteItem(item)">
           mdi-account-remove
         </v-icon>
-      </template>
-      <template #item.position="{item}">
-        {{ positions.find(p => p.id === item.positionId).name }}
       </template>
     </v-data-table>
     <v-dialog v-model="deleteDialog" max-width="700px">
@@ -107,7 +207,10 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <PasswordDialog />
+    <PasswordDialog role="Менеджер" />
+    <v-snackbar v-model="errorSnackbar" color="error"
+      >Произошла ошибка при выполнении запроса</v-snackbar
+    >
   </MainLayout>
 </template>
 
@@ -120,25 +223,44 @@ export default {
   data: () => ({
     search: "",
     headers: [
-      { text: "Id", align: "start", value: "id" },
+      { text: "№", align: "start", value: "id", filterable: false },
       { text: "ФИО", value: "fullName" },
-      { text: "Отдел", value: "department" },
-      { text: "Должность", value: "position", sortable: false },
-      { text: "Действия", value: "actions", sortable: false, width: "200px" }
+      {
+        text: "Отдел",
+        value: "department",
+        sortable: false,
+        filterable: false
+      },
+      {
+        text: "Должность",
+        value: "position",
+        sortable: false,
+        filterable: false
+      },
+      {
+        text: "Дополнительная информация",
+        value: "info",
+        sortable: false,
+        filterable: false
+      },
+      {
+        text: "Действия",
+        value: "actions",
+        sortable: false,
+        filterable: false,
+        width: "200px"
+      }
     ]
   }),
   created() {
     this.$store.dispatch("fetchEmployeesList");
     this.$store.dispatch("fetchPositionsList");
+    this.$store.dispatch("fetchDepartmentsList");
   },
   computed: {
     departments: {
       get() {
-        return [
-          "Отдел разработки и внедрения ПО",
-          "Отдел тестирования",
-          "Отдел аналитики"
-        ];
+        return this.$store.state.positions.departmentsList.value;
       }
     },
     positions: {
@@ -186,12 +308,39 @@ export default {
         });
       }
     },
+    editedItemDepartId: {
+      get() {
+        return this.$store.state.positions.editedItem.departmentId;
+      },
+      set(value) {
+        this.$store.dispatch("setEditedPositionItemField", {
+          fieldName: "departmentId",
+          value: value
+        });
+      }
+    },
     selectedPosition: {
       get() {
         return this.$store.state.employees.selectedPosition;
       },
       set(value) {
         this.$store.dispatch("setSelectedPosition", { value: value });
+      }
+    },
+    selectedDepart: {
+      get() {
+        return this.$store.state.employees.selectedDepart;
+      },
+      set(value) {
+        this.$store.dispatch("setSelectedDepart", { value: value });
+      }
+    },
+    errorSnackbar: {
+      get() {
+        return this.$store.state.employees.errorSnackbar;
+      },
+      set(value) {
+        this.$store.dispatch("setErrorSnackbar", { value: value });
       }
     }
   },
@@ -202,6 +351,7 @@ export default {
     },
     saveItem() {
       this.editedItemPositionId = this.selectedPosition.id;
+      this.editedItemDepartId = this.selectedDepart.id;
       if (this.editedItem.id > 0) {
         this.$store.dispatch("putEmployee", {
           id: this.editedItem.id,
@@ -231,6 +381,7 @@ export default {
     clearFields() {
       this.$store.dispatch("setDefaultEditedItem");
       this.$store.dispatch("setDefaultSelectedPosition");
+      this.$store.dispatch("setDefaultSelectedDepart");
     }
   }
 };
